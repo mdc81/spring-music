@@ -9,7 +9,7 @@ The application use Spring Java configuration and [bean profiles](http://docs.sp
 
 ## Building
 
-This project requires Java version 17 or later to compile.
+This project requires Java version 17.
 
 > [!NOTE]
 > If you need to use an earlier Java version, check out the [`spring-boot-2` branch](https://github.com/cloudfoundry-samples/spring-music/tree/spring-boot-2), which can be built with Java 8 and later.  
