@@ -1,7 +1,7 @@
 package org.cloudfoundry.samples.music.repositories;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.cloudfoundry.samples.music.domain.Album;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -9,18 +9,15 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.init.Jackson2ResourceReader;
 
-import java.util.Collection;
+import java.util.List;
 
 public class AlbumRepositoryPopulator implements ApplicationListener<ApplicationReadyEvent> {
-    private final Jackson2ResourceReader resourceReader;
+    private final ObjectMapper objectMapper;
     private final Resource sourceData;
 
     public AlbumRepositoryPopulator() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        resourceReader = new Jackson2ResourceReader(mapper);
+        objectMapper = JsonMapper.builder().build();
         sourceData = new ClassPathResource("albums.json");
     }
 
@@ -36,22 +33,15 @@ public class AlbumRepositoryPopulator implements ApplicationListener<Application
 
     @SuppressWarnings("unchecked")
     private void populate(CrudRepository repository) {
-        Object entity = getEntityFromResource(sourceData);
-
-        if (entity instanceof Collection) {
-            for (Album album : (Collection<Album>) entity) {
+        try {
+            List<Album> albums = objectMapper.readValue(
+                    sourceData.getInputStream(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, Album.class));
+            for (Album album : albums) {
                 if (album != null) {
                     repository.save(album);
                 }
             }
-        } else {
-            repository.save(entity);
-        }
-    }
-
-    private Object getEntityFromResource(Resource resource) {
-        try {
-            return resourceReader.readFrom(resource, this.getClass().getClassLoader());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

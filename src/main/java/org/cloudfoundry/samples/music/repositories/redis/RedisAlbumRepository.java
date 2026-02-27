@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.StreamSupport;
 
 @Repository
 @Profile("redis")
@@ -67,7 +68,8 @@ public class RedisAlbumRepository implements CrudRepository<Album, String> {
 
     @Override
     public Iterable<Album> findAllById(Iterable<String> ids) {
-        return hashOps.multiGet(ALBUMS_KEY, convertIterableToList(ids));
+        return hashOps.multiGet(ALBUMS_KEY,
+                StreamSupport.stream(ids.spliterator(), false).toList());
     }
 
     @Override
@@ -107,11 +109,5 @@ public class RedisAlbumRepository implements CrudRepository<Album, String> {
         }
     }
 
-    private <T> List<T> convertIterableToList(Iterable<T> iterable) {
-        List<T> list = new ArrayList<>();
-        for (T object : iterable) {
-            list.add(object);
-        }
-        return list;
-    }
+
 }

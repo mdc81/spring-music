@@ -2,14 +2,14 @@ package org.cloudfoundry.samples.music.config;
 
 import io.pivotal.cfenv.core.CfEnv;
 import io.pivotal.cfenv.core.CfService;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.data.mongodb.autoconfigure.DataMongoAutoConfiguration;
+import org.springframework.boot.data.mongodb.autoconfigure.DataMongoRepositoriesAutoConfiguration;
+import org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration;
+import org.springframework.boot.data.redis.autoconfigure.DataRedisRepositoriesAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
+import org.springframework.boot.mongodb.autoconfigure.MongoAutoConfiguration;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -20,8 +20,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,17 +28,16 @@ import java.util.stream.Stream;
 
 public class SpringApplicationContextInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-    private static final Log logger = LogFactory.getLog(SpringApplicationContextInitializer.class);
+    private static final Logger logger = LoggerFactory.getLogger(SpringApplicationContextInitializer.class);
 
-    private static final Map<String, List<String>> profileNameToServiceTags = new HashMap<>();
-    static {
-        profileNameToServiceTags.put("mongodb", Collections.singletonList("mongodb"));
-        profileNameToServiceTags.put("postgres", Collections.singletonList("postgres"));
-        profileNameToServiceTags.put("mysql", Collections.singletonList("mysql"));
-        profileNameToServiceTags.put("redis", Collections.singletonList("redis"));
-        profileNameToServiceTags.put("oracle", Collections.singletonList("oracle"));
-        profileNameToServiceTags.put("sqlserver", Collections.singletonList("sqlserver"));
-    }
+    private static final Map<String, List<String>> profileNameToServiceTags = Map.of(
+            "mongodb",   List.of("mongodb"),
+            "postgres",  List.of("postgres"),
+            "mysql",     List.of("mysql"),
+            "redis",     List.of("redis"),
+            "oracle",    List.of("oracle"),
+            "sqlserver", List.of("sqlserver")
+    );
 
     @Override
     public void initialize(ConfigurableApplicationContext applicationContext) {
@@ -115,7 +112,7 @@ public class SpringApplicationContextInitializer implements ApplicationContextIn
             excludeRedisAutoConfiguration(exclude);
         }
 
-        Map<String, Object> properties = Collections.singletonMap("spring.autoconfigure.exclude",
+        Map<String, Object> properties = Map.of("spring.autoconfigure.exclude",
                 StringUtils.collectionToCommaDelimitedString(exclude));
 
         PropertySource<?> propertySource = new MapPropertySource("springMusicAutoConfig", properties);
@@ -130,15 +127,15 @@ public class SpringApplicationContextInitializer implements ApplicationContextIn
     private void excludeMongoAutoConfiguration(List<String> exclude) {
         exclude.addAll(Arrays.asList(
                 MongoAutoConfiguration.class.getName(),
-                MongoDataAutoConfiguration.class.getName(),
-                MongoRepositoriesAutoConfiguration.class.getName()
+                DataMongoAutoConfiguration.class.getName(),
+                DataMongoRepositoriesAutoConfiguration.class.getName()
         ));
     }
 
     private void excludeRedisAutoConfiguration(List<String> exclude) {
         exclude.addAll(Arrays.asList(
-                RedisAutoConfiguration.class.getName(),
-                RedisRepositoriesAutoConfiguration.class.getName()
+                DataRedisAutoConfiguration.class.getName(),
+                DataRedisRepositoriesAutoConfiguration.class.getName()
         ));
     }
 }

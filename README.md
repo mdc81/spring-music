@@ -1,18 +1,27 @@
 Spring Music
 ============
 
-This is a sample application for using database services on [Cloud Foundry](http://cloudfoundry.org) with the [Spring Framework](http://spring.io) and [Spring Boot](http://projects.spring.io/spring-boot/).
+This is a sample application for using database services on [Cloud Foundry](https://www.cloudfoundry.org) with the [Spring Framework](https://spring.io) and [Spring Boot](https://spring.io/projects/spring-boot).
 
 This application has been built to store the same domain objects in one of a variety of different persistence technologies - relational, document, and key-value stores. This is not meant to represent a realistic use case for these technologies, since you would typically choose the one most applicable to the type of data you need to store, but it is useful for testing and experimenting with different types of services on Cloud Foundry.
 
-The application use Spring Java configuration and [bean profiles](http://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-profiles.html) to configure the application and the connection objects needed to use the persistence stores. It also uses the [Java CFEnv](https://github.com/pivotal-cf/java-cfenv/) library to inspect the environment when running on Cloud Foundry. See the [Cloud Foundry documentation](http://docs.cloudfoundry.org/buildpacks/java/spring-service-bindings.html) for details on configuring a Spring application for Cloud Foundry.
+The application uses Spring Java configuration and [bean profiles](https://docs.spring.io/spring-boot/reference/features/profiles.html) to configure the application and the connection objects needed to use the persistence stores. It also uses the [Java CFEnv](https://github.com/pivotal-cf/java-cfenv/) library to inspect the environment when running on Cloud Foundry.
+
+## Tech stack
+
+| Component | Version |
+|-----------|---------|
+| Java | 25 |
+| Spring Boot | 4.0.3 |
+| Gradle | 9.3.1 |
+| Java CFEnv | 4.0.0 |
 
 ## Building
 
-This project requires Java version 17 or later to compile.
+This project requires Java 25 or later to compile.
 
 > [!NOTE]
-> If you need to use an earlier Java version, check out the [`spring-boot-2` branch](https://github.com/cloudfoundry-samples/spring-music/tree/spring-boot-2), which can be built with Java 8 and later.  
+> If you need to use an earlier Java version, check out the [`spring-boot-2` branch](https://github.com/cloudfoundry-samples/spring-music/tree/spring-boot-2), which can be built with Java 8 and later.
 
 To build a runnable Spring Boot jar file, run the following command:
 
@@ -37,7 +46,7 @@ where `<profile>` is one of the following values:
 * `mongodb`
 * `redis`
 
-If no profile is provided, an in-memory relational database will be used. If any other profile is provided, the appropriate database server must be started separately. Spring Boot will auto-configure a connection to the database using it's auto-configuration defaults. The connection parameters can be configured by setting the appropriate [Spring Boot properties](http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html).
+If no profile is provided, an in-memory H2 relational database will be used. If any other profile is provided, the appropriate database server must be started separately. Spring Boot will auto-configure a connection to the database using its auto-configuration defaults. The connection parameters can be configured by setting the appropriate [Spring Boot properties](https://docs.spring.io/spring-boot/appendix/application-properties/index.html).
 
 If more than one of these profiles is provided, the application will throw an exception and fail to start.
 
@@ -49,7 +58,7 @@ If no bound services are found containing any of these values in the name, an in
 
 If more than one service containing any of these values is bound to the application, the application will throw an exception and fail to start.
 
-After installing the 'cf' [command-line interface for Cloud Foundry](http://docs.cloudfoundry.org/cf-cli/), targeting a Cloud Foundry instance, and logging in, the application can be built and pushed using these commands:
+After installing the `cf` [command-line interface for Cloud Foundry](https://docs.cloudfoundry.org/cf-cli/), targeting a Cloud Foundry instance, and logging in, the application can be built and pushed using these commands:
 
 ~~~
 $ cf push
@@ -59,7 +68,7 @@ The application will be pushed using settings in the provided `manifest.yml` fil
 
 ### Creating and binding services
 
-Using the provided manifest, the application will be created without an external database (in the `in-memory` profile). You can create and bind database services to the application using the information below.
+Using the provided manifest, the application will be created without an external database (using the in-memory H2 profile). You can create and bind database services to the application using the information below.
 
 #### System-managed services
 
@@ -107,26 +116,32 @@ $ cf restart
 
 Database drivers for MySQL, Postgres, Microsoft SQL Server, MongoDB, and Redis are included in the project.
 
-To connect to an Oracle database, you will need to download the appropriate driver (e.g. from http://www.oracle.com/technetwork/database/features/jdbc/index-091264.html). Then make a `libs` directory in the `spring-music` project, and move the driver, `ojdbc7.jar` or `ojdbc8.jar`, into the `libs` directory.
-In `build.gradle`, uncomment the line `compile files('libs/ojdbc8.jar')` or `compile files('libs/ojdbc7.jar')` and run `./gradle assemble`.
+To connect to an Oracle database, you will need to download the appropriate driver from the [Oracle JDBC Downloads page](https://www.oracle.com/database/technologies/appdev/jdbc-downloads.html). Then make a `libs` directory in the `spring-music` project, and move the driver (`ojdbc8.jar` or `ojdbc7.jar`) into the `libs` directory.
+In `build.gradle`, uncomment the appropriate line:
 
+~~~
+implementation files('libs/ojdbc8.jar')
+// or
+implementation files('libs/ojdbc7.jar')
+~~~
+
+Then run `./gradlew assemble`.
 
 ## Alternate Java versions
 
-By default, the application will be built and deployed using Java 17 compatibility.
-If you want to use a more recent version of Java, you will need to update two things.
+By default, the application is built and deployed using Java 25. To use a different version, update two places.
 
-In `build.gradle`, change the `targetCompatibility` Java version from `JavaVersion.VERSION_17` to a different value from `JavaVersion`:
+In `build.gradle`, change the `targetCompatibility` version:
 
 ~~~
 java {
   ...
-  targetCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_25
 }
 ~~~
 
-In `manifest.yml`, change the Java buildpack JRE version from `version: 17.+` to a different value:
+In `manifest.yml`, change the Java buildpack JRE version:
 
 ~~~
-    JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 17.+ } }'
+    JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 25.+ } }'
 ~~~
