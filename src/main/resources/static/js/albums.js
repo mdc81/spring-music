@@ -27,7 +27,13 @@ angular.module('albums', ['ngResource', 'ui.bootstrap']).
         }
     });
 
-function AlbumsController($scope, $modal, Albums, Album, Status) {
+function AlbumsController($scope, $modal, Albums, Album, Status, Info) {
+    $scope.appInfo = Info.get();
+
+    $scope.isEcsEnabled = function () {
+        return $scope.appInfo && $scope.appInfo.profiles &&
+               $scope.appInfo.profiles.indexOf('ecs') !== -1;
+    };
     function list() {
         $scope.albums = Albums.query();
     }

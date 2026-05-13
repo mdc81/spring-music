@@ -33,6 +33,7 @@ public class SpringApplicationContextInitializer implements ApplicationContextIn
     private static final Log logger = LogFactory.getLog(SpringApplicationContextInitializer.class);
 
     private static final Map<String, List<String>> profileNameToServiceTags = new HashMap<>();
+    private static final List<String> ECS_TAGS = Arrays.asList("ecs", "s3", "objectstore", "object-store");
     static {
         profileNameToServiceTags.put("mongodb", Collections.singletonList("mongodb"));
         profileNameToServiceTags.put("postgres", Collections.singletonList("postgres"));
@@ -85,6 +86,35 @@ public class SpringApplicationContextInitializer implements ApplicationContextIn
             logger.info("Setting service profile " + profiles.get(0));
             appEnvironment.addActiveProfile(profiles.get(0));
         }
+
+        if (isEcsServiceBound(services)) {
+            logger.info("ECS object storage service detected — activating 'ecs' profile");
+            appEnvironment.addActiveProfile("ecs");
+        }
+    }
+
+    /**
+     * Multi-strategy ECS detection:
+     * 1. Any bound service has a tag matching a known ECS/S3 tag name.
+     * 2. Any bound service credentials contain both an endpoint and an access key,
+     *    indicating an S3-compatible service regardless of its tag.
+     */
+    private boolean isEcsServiceBound(List<CfService> services) {
+        for (CfService service : services) {
+            List<String> tags = service.getTags();
+            for (String ecsTag : ECS_TAGS) {
+                if (tags.stream().anyMatch(t -> t.equalsIgnoreCase(ecsTag))) {
+                    return true;
+                }
+            }
+            Map<String, Object> creds = service.getCredentials().getMap();
+            boolean hasEndpoint = creds.containsKey("endpoint") || creds.containsKey("s3Endpoint");
+            boolean hasKey = creds.containsKey("accessKey") || creds.containsKey("access_key_id");
+            if (hasEndpoint && hasKey) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void validateActiveProfiles(ConfigurableEnvironment appEnvironment) {

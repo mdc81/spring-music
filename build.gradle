@@ -18,6 +18,7 @@ repositories {
 
 ext {
     javaCfEnvVersion = '3.1.2'
+    awsSdkVersion = '2.44.4'
 }
 
 dependencies {
@@ -31,6 +32,10 @@ dependencies {
 
     // Java CfEnv
     implementation "io.pivotal.cfenv:java-cfenv-boot:${javaCfEnvVersion}"
+
+    // AWS SDK v2 - ECS/S3 compatible object storage
+    implementation platform("software.amazon.awssdk:bom:${awsSdkVersion}")
+    implementation "software.amazon.awssdk:s3"
 
     // JPA Persistence
     runtimeOnly "org.apache.commons:commons-pool2"

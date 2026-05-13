@@ -26,6 +26,8 @@
                     <li role="presentation"><a ng-click="deleteAlbum(album)">delete</a></li>
                 </ul>
             </div>
+
+            <div ng-if="isEcsEnabled()" ng-include="'templates/albumFiles.html'"></div>
         </div>
     </div>
 </div>

@@ -3,10 +3,11 @@
         <div class="container">
             <div class="navbar-header">
                 <a class="navbar-brand" href="#">Spring Music <span class="glyphicon glyphicon-music"></span></a>
-                <ul class="navbar-nav">
-                    <!--<li></li>-->
-                </ul>
             </div>
+            <ul class="nav navbar-nav">
+                <li><a href="#/">Albums</a></li>
+                <li ng-if="isEcsEnabled()"><a href="#/storage"><span class="glyphicon glyphicon-hdd"></span> Files</a></li>
+            </ul>
 
             <ul class="nav navbar-nav navbar-right">
                 <li class="dropdown">

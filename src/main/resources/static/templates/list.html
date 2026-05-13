@@ -6,6 +6,7 @@
             <th>Artist</th>
             <th>Year</th>
             <th>Genre</th>
+            <th ng-if="isEcsEnabled()">Files</th>
             <th></th>
         </tr>
         </thead>
@@ -22,6 +23,9 @@
             </td>
             <td>
                 <in-place-edit field-name='genre' input-type='text' input-class='input-medium' model=album>{{album.genre}}</in-place-edit>
+            </td>
+            <td ng-if="isEcsEnabled()">
+                <div ng-include="'templates/albumFiles.html'"></div>
             </td>
             <td class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">

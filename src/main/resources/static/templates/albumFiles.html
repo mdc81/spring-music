@@ -1,0 +1,39 @@
+<div class="album-files" ng-controller="AlbumFilesController">
+    <div class="text-right" style="margin-top:6px;">
+        <a href="" ng-click="toggleFiles(album)" class="text-muted small">
+            <span class="glyphicon glyphicon-paperclip"></span>
+            <span ng-if="!showFiles">Files <span class="badge">{{albumFiles.length}}</span></span>
+            <span ng-if="showFiles">Hide files</span>
+        </a>
+    </div>
+
+    <div ng-if="showFiles" style="margin-top:8px; border-top:1px solid #eee; padding-top:8px;">
+        <div ng-if="albumFiles.length === 0" class="text-muted small">No files attached yet.</div>
+
+        <ul class="list-unstyled" ng-if="albumFiles.length > 0" style="font-size:12px;">
+            <li ng-repeat="file in albumFiles" style="margin-bottom:4px;">
+                <span class="glyphicon glyphicon-file text-muted"></span>
+                <a href="" ng-click="downloadAlbumFile(file)" title="{{file.filename}}">
+                    {{file.filename | limitTo:24}}{{file.filename.length > 24 ? '…' : ''}}
+                </a>
+                <span class="text-muted">({{humanSize(file.sizeBytes)}})</span>
+                <a href="" ng-click="deleteAlbumFile(file, album)" class="text-danger" style="margin-left:4px;" title="Delete">
+                    <span class="glyphicon glyphicon-remove-circle"></span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="input-group input-group-sm" style="margin-top:6px;">
+            <input type="file" class="form-control" style="font-size:11px; height:auto;"
+                   onchange="angular.element(this).scope().onAlbumFileSelected(this)">
+            <span class="input-group-btn">
+                <button class="btn btn-default btn-xs"
+                        ng-click="uploadForAlbum(album)"
+                        ng-disabled="!albumSelectedFile || albumUploading"
+                        title="Attach file to album">
+                    <span class="glyphicon glyphicon-upload"></span>
+                </button>
+            </span>
+        </div>
+    </div>
+</div>

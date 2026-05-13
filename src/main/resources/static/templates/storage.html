@@ -1,0 +1,87 @@
+<div id="storage">
+    <div class="page-header">
+        <h1>File Storage <span class="glyphicon glyphicon-hdd"></span></h1>
+        <p class="text-muted">Upload text or media files to your bound ECS bucket.</p>
+    </div>
+
+    <div class="row">
+        <div ng-include src="'templates/status.html'"></div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"><span class="glyphicon glyphicon-upload"></span> Upload a File</h3>
+                </div>
+                <div class="panel-body">
+                    <p class="text-muted small">
+                        Allowed types: images (JPG, PNG, GIF, WebP), text (TXT, CSV, JSON, XML),
+                        documents (PDF), audio (MP3, WAV, FLAC). Maximum size: 10 MB.
+                    </p>
+                    <div class="form-group">
+                        <input type="file" id="generalFileInput" class="form-control"
+                               onchange="angular.element(this).scope().onFileSelected(this)">
+                    </div>
+                    <div ng-if="selectedFile" class="text-muted small" style="margin-bottom:8px;">
+                        Selected: <strong>{{selectedFile.name}}</strong> ({{humanSize(selectedFile.size)}})
+                    </div>
+                    <button class="btn btn-primary"
+                            ng-click="upload()"
+                            ng-disabled="!selectedFile || uploading">
+                        <span ng-if="uploading"><span class="glyphicon glyphicon-refresh"></span> Uploading...</span>
+                        <span ng-if="!uploading"><span class="glyphicon glyphicon-upload"></span> Upload</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <span class="glyphicon glyphicon-folder-open"></span> Stored Files
+                        <span class="badge">{{files.length}}</span>
+                        <a href="" ng-click="loadFiles()" class="pull-right" title="Refresh">
+                            <span class="glyphicon glyphicon-refresh"></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="panel-body" ng-if="files.length === 0">
+                    <p class="text-muted">No files uploaded yet.</p>
+                </div>
+                <table class="table table-striped table-hover" ng-if="files.length > 0">
+                    <thead>
+                        <tr>
+                            <th>Filename</th>
+                            <th>Type</th>
+                            <th>Size</th>
+                            <th>Uploaded</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="file in files">
+                            <td>{{file.filename}}</td>
+                            <td><span class="label label-default">{{file.contentType || '—'}}</span></td>
+                            <td>{{humanSize(file.sizeBytes)}}</td>
+                            <td>{{file.uploadedAt | date:'medium'}}</td>
+                            <td>
+                                <div class="btn-group btn-group-xs">
+                                    <button class="btn btn-default" ng-click="download(file)" title="Download">
+                                        <span class="glyphicon glyphicon-download-alt"></span>
+                                    </button>
+                                    <button class="btn btn-danger" ng-click="deleteFile(file)" title="Delete">
+                                        <span class="glyphicon glyphicon-trash"></span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
