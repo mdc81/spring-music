@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -18,6 +19,7 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.IOException;
@@ -83,6 +85,12 @@ public class EcsStorageService implements StorageService {
                     .build());
         } catch (NoSuchKeyException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found");
+        } catch (S3Exception e) {
+            logger.error("ECS S3 error downloading {}: HTTP {} — {}", key, e.statusCode(), e.awsErrorDetails().errorMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Storage service error: " + e.awsErrorDetails().errorMessage());
+        } catch (SdkClientException e) {
+            logger.error("ECS client error downloading {}: {}", key, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Cannot reach storage service");
         }
     }
 
@@ -97,6 +105,9 @@ public class EcsStorageService implements StorageService {
             return head.contentType();
         } catch (NoSuchKeyException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found");
+        } catch (S3Exception | SdkClientException e) {
+            logger.error("ECS error on headObject for {}: {}", key, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Cannot reach storage service");
         }
     }
 
@@ -104,29 +115,46 @@ public class EcsStorageService implements StorageService {
     public void delete(String key) {
         validateKey(key);
         logger.info("Deleting object: {}", key);
-        s3Client.deleteObject(DeleteObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .build());
+        try {
+            s3Client.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build());
+        } catch (S3Exception e) {
+            logger.error("ECS S3 error deleting {}: HTTP {} — {}", key, e.statusCode(), e.awsErrorDetails().errorMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Storage service error: " + e.awsErrorDetails().errorMessage());
+        } catch (SdkClientException e) {
+            logger.error("ECS client error deleting {}: {}", key, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Cannot reach storage service");
+        }
     }
 
     private StoredFile putObject(String key, MultipartFile file) {
+        String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
         try {
-            String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
+            byte[] bytes = file.getBytes();
             s3Client.putObject(
                     PutObjectRequest.builder()
                             .bucket(bucketName)
                             .key(key)
                             .contentType(contentType)
-                            .contentLength(file.getSize())
+                            .contentLength((long) bytes.length)
                             .build(),
-                    RequestBody.fromInputStream(file.getInputStream(), file.getSize())
+                    RequestBody.fromBytes(bytes)
             );
             logger.info("Stored object: {}", key);
-            return new StoredFile(key, extractFilename(key), contentType, file.getSize(), Instant.now());
+            return new StoredFile(key, extractFilename(key), contentType, bytes.length, Instant.now());
+        } catch (S3Exception e) {
+            logger.error("ECS S3 error storing {}: HTTP {} — {}", key, e.statusCode(), e.awsErrorDetails().errorMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Storage service error: " + e.awsErrorDetails().errorMessage());
+        } catch (SdkClientException e) {
+            logger.error("ECS client error storing {}: {}", key, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Cannot reach storage service — check ECS endpoint and network connectivity");
         } catch (IOException e) {
             logger.error("Failed to read upload stream for key {}: {}", key, e.getMessage());
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to process uploaded file");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read uploaded file");
         }
     }
 

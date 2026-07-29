@@ -9,6 +9,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.auth.signer.Aws4UnsignedPayloadSigner;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.client.config.SdkAdvancedClientOption;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
@@ -44,6 +47,11 @@ public class EcsStorageConfig {
                 .region(Region.US_EAST_1)
                 .serviceConfiguration(S3Configuration.builder()
                         .pathStyleAccessEnabled(true)
+                        .checksumValidationEnabled(false)
+                        .build())
+                .overrideConfiguration(ClientOverrideConfiguration.builder()
+                        .putAdvancedOption(SdkAdvancedClientOption.SIGNER,
+                                Aws4UnsignedPayloadSigner.create())
                         .build())
                 .build();
     }
